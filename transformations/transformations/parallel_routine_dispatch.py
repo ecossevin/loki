@@ -75,7 +75,7 @@ class ParallelRoutineDispatchTransformation(Transformation):
         map_routine['field_new'] = [] 
         map_routine['field_delete'] = []
         map_routine['nb_no_name'] = 0 #to give unique identifier to parallel regions with no name
-        map_routine['not_in_pragma_calls'] = []
+        map_routine['not_in_pragma_calls'] = [] #calls that aren't in acdc pragma regions
         map_routine['c_imports_parallel'] = []
         map_routine['imports_mapper'] = {}
         map_routine['call_mapper'] = {}
@@ -88,7 +88,7 @@ class ParallelRoutineDispatchTransformation(Transformation):
             for region in FindNodes(ir.PragmaRegion).visit(routine.body):
                 if is_loki_pragma(region.pragma):
                     in_pragma_calls += FindNodes(ir.CallStatement).visit(region)
-                    self.process_parallel_region(routine, region, map_routine, map_region)
+                    self.process_parallel_region(routine, region, map_routine, map_region) 
         map_routine['not_in_pragma_calls'] = [call for call in calls if call not in in_pragma_calls]
         single_variable_declaration(routine)
         self.process_not_region_call(routine, map_routine, map_region)
@@ -119,8 +119,8 @@ class ParallelRoutineDispatchTransformation(Transformation):
 
 
     def process_parallel_region(self, routine, region, map_routine, map_region):
-        map_region['get_data'] = {}
-        map_region['compute'] = {}
+        map_region['get_data'] = {} #GET_DEVICE_DATA #GET_HOST_DATA
+        map_region['compute'] = {} 
         map_region['region'] = {}
         map_region['lparallel'] = {}
         map_region['private'] = []
@@ -134,7 +134,7 @@ class ParallelRoutineDispatchTransformation(Transformation):
         if 'parallel' not in pragma_attrs:
             return
         if 'target' not in pragma_attrs:
-            pragma_attrs['target'] = 'OpenMP'
+            pragma_attrs['target'] = 'OpenMP' #default value if no target
             #pragma_attrs['target'] = 'OpenMP/OpenMPSingleColumn/OpenACCSingleColumn'
         if 'name' not in pragma_attrs:
             pragma_attrs['name'] = str(map_routine['nb_no_name'])
@@ -172,6 +172,9 @@ class ParallelRoutineDispatchTransformation(Transformation):
         #map_routine['routine_map_temp'] = routine_map_temp
         #map_routine['routine_map_derived'] = routine_map_derived
     def create_new_region(self, routine, region, region_name, map_routine, map_region, targets):
+        """
+        Replace the region by if lparallelmethod + body of the region.
+        """
         #IF (LPARALLELMETHOD ('OPENMP','APL_ARPEGE_PARALLEL:CPPHINP')) THEN
         if len(targets) == 1:
             cond = ir.Conditional(
@@ -220,6 +223,9 @@ class ParallelRoutineDispatchTransformation(Transformation):
 #        map_routine['map_transformation'][region] = tuple(new_region)
     
     def process_target(self, routine, region, region_name, map_routine, map_region, target):
+        """
+        For each target within one region : create the different parts of the region body. 
+        """
         map_region['get_data'][target] = self.create_pt_sync(routine, target, region_name, True, map_region)
         map_region['compute'][target] = self.map_call_compute[target](routine, region, region_name, map_routine, map_region)
         map_region['region'][target] = map_region['get_data'][target] + list(map_region['compute'][target]) + [map_region['synchost']] + map_region['nullify']
@@ -478,6 +484,9 @@ class ParallelRoutineDispatchTransformation(Transformation):
                     raise Exception(f"cpg_bnds unexpected name : {self.cpg_bnds.name}")
 
     def create_variables(self, routine, map_routine):
+        """
+        Add some variables to routine spec.
+        """
         #
         #  INTEGER(KIND=JPIM) :: JBLK
         #  TYPE(CPG_BNDS_TYPE) :: YLCPG_BNDS
@@ -511,6 +520,9 @@ class ParallelRoutineDispatchTransformation(Transformation):
         map_routine['dcls'] = dcls
 
     def create_imports(self, routine, map_routine):
+        """
+        Add some imports to routine spec.
+        """
         imports = []
         imports += [ir.Import(module="ACPY_MOD", scope=routine)]
         imports += [ir.Import(module="STACK_MOD", scope=routine)]
