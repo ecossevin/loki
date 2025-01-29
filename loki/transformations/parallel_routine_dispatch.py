@@ -32,7 +32,7 @@ from loki.ir import (
 from loki.ir import (
     nodes as ir,
 )
-from loki.transform import Transformation
+from loki.transformations import Transformation
 
 __all__ = ["ParallelRoutineDispatchTransformation"]
 

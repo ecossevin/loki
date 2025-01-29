@@ -14,7 +14,7 @@ from loki.frontend import available_frontends, OMNI
 from loki import Sourcefile, FindNodes, CallStatement, fgen, Conditional, ProcedureItem
 from loki import Loop
 
-from transformations.parallel_routine_dispatch import ParallelRoutineDispatchTransformation
+from loki.transformations.parallel_routine_dispatch import ParallelRoutineDispatchTransformation
 
 import os
 
@@ -32,8 +32,8 @@ def init_transformation(here, frontend):
             "KLON", "YDCPG_OPTS%KLON", "YDGEOMETRY%YRDIM%NPROMA",
             "KPROMA", "YDDIM%NPROMA", "NPROMA"
     ]
-    path_map_index = os.getcwd()+"/transformations/transformations/field_index.pkl"
-    path_map_intfb = os.getcwd()+"/transformations/tests/sources/projParallelRoutineDispatch/path_map_intfb.pkl"
+    path_map_index = os.getcwd()+"/loki/transformations/field_index.pkl"
+    path_map_intfb = os.getcwd()+"/loki/transformations/tests/sources/projParallelRoutineDispatch/path_map_intfb.pkl"
     with open(path_map_index, "rb") as fp:
         map_index = pickle.load(fp)
 
@@ -245,7 +245,7 @@ def test_parallel_routine_dispatch_get_data(here, frontend):
     is_intent = True
     horizontal, map_index, map_intfb = init_transformation(here, frontend)
     #build path_to_openacc.pkl:
-    path =  os.getcwd()+"/transformations/tests/sources/projParallelRoutineDispatch/cpphinp.intfb.h"
+    path =  os.getcwd()+"/loki/transformations/tests/sources/projParallelRoutineDispatch/cpphinp.intfb.h"
     map_intfb = {} 
     map_intfb["cpphinp"] = path
     transformation = ParallelRoutineDispatchTransformation(is_intent, horizontal, 
